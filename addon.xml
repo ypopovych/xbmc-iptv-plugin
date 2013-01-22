@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.video.iptv.viewer"
+       name="IPTV Viewer"
+       version="0.0.1"
+       provider-name="erop1991@gmail.com">
+  <requires>
+    <import addon="xbmc.python" version="2.0"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource"
+            library="default.py">
+        <provides>video</provides>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <summary>IPTV Viewer</summary>
+    <description>Просмотр Internet TV из плейлиста без проверки на доступность. Плейлисты могут быть в подкатегории плейлистов iptv или указаны напрямую в настройках</description>
+    <platform>all</platform>
+  </extension>
+</addon>
