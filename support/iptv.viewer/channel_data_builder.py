@@ -6,7 +6,7 @@ import urllib2
 import re
 import os
 import sys
-sys.path.append(os.getcwd() + '/../plugin.video.iptv.viewer')
+sys.path.append(os.getcwd() + '/../../plugin.video.iptv.viewer')
 from channel_cache import ChannelUrlCache, Channel, ChannelAdvancedSearch
 
 class DataParser(ChannelUrlCache, ChannelAdvancedSearch):
