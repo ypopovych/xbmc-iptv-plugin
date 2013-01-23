@@ -5,4 +5,10 @@
 		label	= "40001"
 		default	= ""
 	/>
+	<setting
+		id	= "channel_list"
+		type = "text"
+		label = "40002"
+		default = "http://github.com/IICUX/xbmc-iptv-plugin/raw/master/video.iptv.viewer.channels_server_additions/db/channels.ch"
+	/>
 </settings>

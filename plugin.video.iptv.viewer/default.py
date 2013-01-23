@@ -1,75 +1,28 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+__author__ = 'george'
+
 import sys, xbmc, xbmcaddon, xbmcgui, xbmcplugin, os
 from urlparse import urlparse
-import urllib2
-import pickle
-import time
-import shutil
+from cache import FileCache
+from channel_info_provider import InfoProvider
+
 
 def enum(*sequential, **named):
     enums = dict(zip(sequential, range(len(sequential))), **named)
     return type('Enum', (), enums)
 
-class URLCache(object):
-    def __init__(self, path):
-        self.cache_path = path
-        self.cache_file = os.path.join(path, 'cache.dat')
-        try:
-            file = open(self.cache_file, "rt")
-            self.urls = pickle.load(file)
-            file.close()
-        except IOError:
-            self.urls = {}
-            shutil.rmtree(self.cache_path)
-            os.mkdir(self.cache_path)
-        self.clear_deleted()
+class M3UCache(FileCache):
+    def getURL(self, key):
+        return key
 
-    def clear_deleted(self):
-        files = []
-        for val in self.urls.values():
-            files.append(os.path.basename(val[0]))
-
-        cache = os.listdir(self.cache_path)
-        for f in cache:
-            if f not in files:
-                os.remove(os.path.join(self.cache_path, f))
-
-    def save(self):
-        fd = open(self.cache_file, 'wt')
-        pickle.dump(self.urls, fd)
-        fd.close()
-
-    def updateCache(self, url):
-        try:
-            file, aTime = self.urls[url]
-            os.remove(file)
-        except KeyError:
-            pass
-        fd = urllib2.urlopen(url)
-        name = urlparse(url)[1]
+    def getFileItemName(self, key):
+        urlparts = urlparse(key)
+        name = urlparts[1]
         if name == "":
-            name = "unnamed_url"
-        file = os.path.join(self.cache_path, name) + '.m3u'
-        fd2 = open(file, 'wb')
-        fd2.write(fd.read())
-        fd.close()
-        fd2.close()
-
-        self.save()
-        self.urls[url] = (file, time.time())
-
-    def getURL(self, url):
-        try:
-            file, aTime = self.urls[url]
-        except KeyError:
-            self.updateCache(url)
-            file, aTime = self.urls[url]
-        if (time.time() - aTime) > 32000:
-            self.updateCache(url)
-            file, aTime = self.urls[url]
-        return file
+            name = os.path.basename(urlparts[2])
+        return name + '.m3u'
 
 class Plugin(object):
 
@@ -80,15 +33,27 @@ class Plugin(object):
         self.handle = handle
         self.settings = settings
         self.path = settings.getAddonInfo('path')
-        self.url_cache = URLCache(os.path.join(os.path.join(os.path.join(self.path,'resources'), 'media'), 'm3u_cache'))
+        self.m3u_cache = None
+        self.info_provider = None
+        self.channel_updates = settings.getSetting('channel_list')
 
         playlists = settings.getSetting('playlists') + ',' + xbmc.translatePath('special://profile/playlists/iptv')
         self.playlists = self.getPlaylistList(playlists)
+
         if params is not None:
             self.params = self.getParams(params)
-	else:
-	    self.params = {}
-        self.url_cache.save()
+        else:
+            self.params = {}
+
+    def __getM3UCache(self):
+        if self.m3u_cache is None:
+            self.m3u_cache = M3UCache(os.path.join(os.path.join(os.path.join(self.path,'resources'), 'media'), 'm3u_cache'))
+        return self.m3u_cache
+
+    def __getInfoProvider(self):
+        if self.info_provider is None:
+            self.info_provider = InfoProvider(os.path.join(os.path.join(os.path.join(self.path,'resources'), 'media'), 'icon_cache'), self.channel_updates)
+        return self.info_provider
 
     def getPlaylistList(self, playlists):
         playlists = playlists.split(',')
@@ -96,7 +61,7 @@ class Plugin(object):
         for playlist in playlists:
             url = urlparse(playlist)
             if url.scheme == "http":
-                playlist_files.append(self.url_cache.getURL(playlist))
+                playlist_files.append(self.__getM3UCache().getFilePath(playlist))
             else:
                 if os.path.isdir(playlist):
                     for file in os.listdir(playlist):
@@ -121,13 +86,18 @@ class Plugin(object):
 
         file = open(playlist, "rt")
         file.readline()
-        for line in file.xreadlines():
+        name = "bad_m3u"
+        for line in file:
             if line[0] == '#':
                 if line[:5] == '#EXTI':
                     name = line[line.find(',')+1:]
                     name = unicode(name, 'utf8', 'ignore').strip()
             else:
-                files.append( (name, line, image) )
+                try:
+                    icon = self.__getInfoProvider().getFilePath(name)
+                except KeyError:
+                    icon = image
+                files.append( (name, line, icon) )
         file.close()
         return files
 
@@ -182,9 +152,9 @@ class Plugin(object):
     MODE_FUNC = { MODE.OPEN_PLAYLIST: showChannels, MODE.PLAY_VIDEO: playVideo}
 
 
-if (__name__ == "__main__"):
+if __name__ == "__main__":
     settings = xbmcaddon.Addon(id="plugin.video.iptv.viewer")
-    if (not sys.argv[2]):
+    if not sys.argv[2]:
         Plugin(sys.argv[0], int(sys.argv[1]), settings).printPlaylists()
     else:
         Plugin(sys.argv[0], int(sys.argv[1]), settings, sys.argv[2]).execute()
