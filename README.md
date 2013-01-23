@@ -1,4 +1,4 @@
 xbmc-iptv-plugin
 ================
 
-XBMC plugin for IPTV support
+This plugin allow to use IPTV m3u playlists from network or from playlists/iptv folder.
