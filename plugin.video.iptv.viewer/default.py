@@ -7,7 +7,6 @@ import urllib2
 import pickle
 import time
 import shutil
-from logo import *
 
 def enum(*sequential, **named):
     enums = dict(zip(sequential, range(len(sequential))), **named)
@@ -116,26 +115,19 @@ class Plugin(object):
             params_dict[data[0]] = data[1]
         return params_dict
         
-    def readPlaylist(self, playlist):
-	file = open(playlist, "rt")
-	file.readline()
-        
-        image = os.path.join(self.path, 'icon.png')
+    def readPlaylist(self, playlist):        
+		image = os.path.join(self.path, 'icon.png')
+		files = []
 		
-	files = []
-		
+		file = open(playlist, "rt")
+		file.readline()
         for line in file.xreadlines():
             if line[0] == '#':
                 if line[:5] == '#EXTI':
                     name = line[line.find(',')+1:]
                     name = unicode(name, 'utf8', 'ignore').strip()
             else:
-                try:
-                    icon = CHANNEL_LOGOS[name.lower()]
-                    icon = os.path.join(os.path.join(self.path, 'logo'), icon) + '.png'
-                except KeyError:
-                    icon = image
-                files.append( (name, line, icon) )           
+                files.append( (name, line, image) )           
         file.close()
         return files
 
@@ -153,9 +145,9 @@ class Plugin(object):
 	
     def playVideo(self):
         playlist = self.playlists[int(self.params['playlist'])]
-	video = int(self.params['video'])
+		video = int(self.params['video'])
 		
-	resultPlaylist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
+		resultPlaylist = xbmc.PlayList(xbmc.PLAYLIST_VIDEO)
         resultPlaylist.clear()
         
         files = self.readPlaylist(playlist)
@@ -176,16 +168,16 @@ class Plugin(object):
             for playlist in self.playlists:
                 name = os.path.basename(playlist)
                 name = name[:name.rfind('.')]
-		item = xbmcgui.ListItem(name)
-		item.setInfo(type = "Video", infoLabels = {"Title": name} )
-		purl = self.script + "?mode=" + str(self.MODE.OPEN_PLAYLIST) + "&playlist=" + str(index)
-		index += 1
-		xbmcplugin.addDirectoryItem(self.handle, purl, item, True)
+				item = xbmcgui.ListItem(name)
+				item.setInfo(type = "Video", infoLabels = {"Title": name} )
+				purl = self.script + "?mode=" + str(self.MODE.OPEN_PLAYLIST) + "&playlist=" + str(index)
+				index += 1
+				xbmcplugin.addDirectoryItem(self.handle, purl, item, True)
             xbmcplugin.endOfDirectory(self.handle)
-	else:
-            self.params["mode"] = self.MODE.OPEN_PLAYLIST
-            self.params["playlist"] = '0'
-	    self.execute()
+		else:
+			self.params["mode"] = self.MODE.OPEN_PLAYLIST
+			self.params["playlist"] = '0'
+			self.execute()
 
     MODE_FUNC = { MODE.OPEN_PLAYLIST: showChannels, MODE.PLAY_VIDEO: playVideo}
 

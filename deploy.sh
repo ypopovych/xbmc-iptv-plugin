@@ -15,9 +15,11 @@ do
 	if [ ! -d "$REPO_DIR/$addon_name" ]; then
 		mkdir "$REPO_DIR/$addon_name"
 	fi
+	rm -f "$REPO_DIR/$addon_name/$addon_name-$version.zip"
 	zip -r "$REPO_DIR/$addon_name/$addon_name-$version.zip" "$addon_name"
 	cp -f "$f/icon.png" "$REPO_DIR/$addon_name" 
 	cp -f "$f/changelog.txt" "$REPO_DIR/$addon_name"
+	cp -f "$f/changelog.txt" "$REPO_DIR/$addon_name/changelog-$version.txt"
 	cp -f "$f/fanart.jpg" "$REPO_DIR/$addon_name"
 done
 
