@@ -11,8 +11,8 @@
         <provides>video</provides>
   </extension>
   <extension point="xbmc.addon.repository" name="IPTV Viewer Repository">
-		<info compressed="false">http://g.if.ua/xbmc/addons.xml</info>
-		<checksum>http://g.if.ua/xbmc/addons.xml.md5</checksum>
+		<info compressed="false">http://g.if.ua/xbmc/addon.xml</info>
+		<checksum>http://g.if.ua/xbmc/addon.xml.md5</checksum>
 		<datadir zip="true">http://g.if.ua/xbmc/addons/</datadir>
 	</extension>
   <extension point="xbmc.addon.metadata">
