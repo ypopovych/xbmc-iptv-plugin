@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <strings>
     <string id="40001">Плейлист(розділений комами список файлів|директорій|http ссилок)</string>
-    <string id="40002">Ссилка на файл з інформациєю про канали</string>
+    <string id="40002">Пріоритет каналів (країна)</string>
+    <string id="40003">Елементи пошуку плейлистів</string>
 </strings>

@@ -28,6 +28,10 @@ class Plugin(object):
 
     MODE = enum('OPEN_PLAYLIST', 'PLAY_VIDEO')
 
+    __channels_folder_url__ = 'http://github.com/IICUX/xbmc-iptv-plugin/raw/master/support/iptv.viewer/db'
+    __channels_file_names__ = ( 'ruchannels.ch', 'uachannels.ch' )
+    __channel_country_strings__ = ( u'россия', u'украина')
+
     def __init__(self, script, handle, settings, params = None):
         self.script = script
         self.handle = handle
@@ -35,9 +39,11 @@ class Plugin(object):
         self.path = settings.getAddonInfo('path')
         self.m3u_cache = None
         self.info_provider = None
-        self.channel_updates = settings.getSetting('channel_list')
+        self.channel_updates = self.__channels_folder_url__ + '/' + self.__channels_file_names__[int(settings.getSetting('channel_list'))]
+        self.channel_country = self.__channel_country_strings__[int(settings.getSetting('channel_list'))]
 
-        playlists = settings.getSetting('playlists') + ',' + xbmc.translatePath('special://profile/playlists/iptv')
+        playlists = settings.getSetting('playlists') + ',' + settings.getSetting('playlists2') + ',' +\
+                    settings.getSetting('playlists3') + ',' + xbmc.translatePath('special://profile/playlists/iptv')
         self.playlists = self.getPlaylistList(playlists)
 
         if params is not None:
@@ -52,24 +58,25 @@ class Plugin(object):
 
     def __getInfoProvider(self):
         if self.info_provider is None:
-            self.info_provider = InfoProvider(os.path.join(os.path.join(os.path.join(self.path,'resources'), 'media'), 'icon_cache'), self.channel_updates)
+            self.info_provider = InfoProvider(os.path.join(os.path.join(self.path,'resources'), 'media'), self.channel_updates, self.channel_country)
         return self.info_provider
 
     def getPlaylistList(self, playlists):
         playlists = playlists.split(',')
         playlist_files = []
         for playlist in playlists:
-            url = urlparse(playlist)
-            if url.scheme == "http":
-                playlist_files.append(self.__getM3UCache().getFilePath(playlist))
-            else:
-                if os.path.isdir(playlist):
-                    for file in os.listdir(playlist):
-                        if file.rfind(".m3u") != -1:
-                            playlist_files.append(os.path.join(playlist, file))
+            if playlist != '':
+                url = urlparse(playlist)
+                if url.scheme == "http":
+                    playlist_files.append(self.__getM3UCache().getFilePath(playlist))
                 else:
-                    if playlist.rfind(".m3u") != -1:
-                        playlist_files.append(playlist)
+                    if os.path.isdir(playlist):
+                        for file in os.listdir(playlist):
+                            if file.rfind(".m3u") != -1:
+                                playlist_files.append(os.path.join(playlist, file))
+                    else:
+                        if playlist.rfind(".m3u") != -1:
+                            playlist_files.append(playlist)
         return playlist_files
 
     def getParams(self, params):
@@ -94,8 +101,10 @@ class Plugin(object):
                     name = unicode(name, 'utf8', 'ignore').strip()
             else:
                 try:
-                    icon = self.__getInfoProvider().getFilePath(name)
+                    icon = self.__getInfoProvider().getImageURL(name)
                 except KeyError:
+                    icon = image
+                if icon is None:
                     icon = image
                 files.append( (name, line, icon) )
         file.close()

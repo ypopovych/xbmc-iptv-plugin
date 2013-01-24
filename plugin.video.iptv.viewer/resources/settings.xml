@@ -1,14 +1,28 @@
 ﻿<settings>
+    <setting
+            id	= "channel_list"
+            type = "enum"
+            label = "40002"
+            values = "RU|UA"
+            default = "0"
+    />
+    <setting label="40001" type="lsep"/>
 	<setting
-		id	= "playlists"
-		type	= "text"
-		label	= "40001"
-		default	= ""
+		    id	= "playlists"
+		    type	= "text"
+		    label	= "40003"
+		    default	= ""
 	/>
-	<setting
-		id	= "channel_list"
-		type = "text"
-		label = "40002"
-		default = "http://github.com/IICUX/xbmc-iptv-plugin/raw/master/support/iptv.viewer/db/channels.ch"
-	/>
+    <setting
+            id	= "playlists2"
+            type	= "text"
+            label	= "40003"
+            default	= ""
+    />
+    <setting
+            id	= "playlists3"
+            type	= "text"
+            label	= "40003"
+            default	= ""
+    />
 </settings>

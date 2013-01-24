@@ -1,0 +1,38 @@
+[
+    {
+        "output_name":"uachannels.ch",
+        "urls":
+                [
+                    {
+                        "url":"http://tv.yandex.ua/187/channels",
+                        "country_string": null
+                    },
+                    {
+                        "url":"http://tv.yandex.ua/2/channels",
+                        "country_string":" (Россия)"
+                    },
+                    {
+                        "url":"http://tv.yandex.ua/213/channels",
+                        "country_string":" (Россия)"
+                    }
+                ]
+    },
+    {
+        "output_name":"ruchannels.ch",
+        "urls":
+                [
+                    {
+                        "url":"http://tv.yandex.ua/2/channels",
+                        "country_string":null
+                    },
+                    {
+                        "url":"http://tv.yandex.ua/213/channels",
+                        "country_string":null
+                    },
+                    {
+                        "url":"http://tv.yandex.ua/187/channels",
+                        "country_string":" (Украина)"
+                    }
+                ]
+    }
+]

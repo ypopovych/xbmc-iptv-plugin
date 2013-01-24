@@ -13,15 +13,21 @@ class Channel(object):
         self.info_url = info_url
         self.id = 0
 
+    def __unicode__(self):
+        return u'Channel : { ID: ' + unicode(self.id) + u', Name: ' + unicode(self.name) +\
+               u', Image: ' + (unicode(self.image_url) if self.image_url else u'None') +\
+                u', Info: ' + (unicode(self.info_url) if self.info_url else u'None') + u' }'
+
     def __str__(self):
-        return "Channel : { ID: " + str(self.id) + ", Name: "+ self.name.encode('ascii', 'ignore') +", Image: " + self.image_url + ", Info: " + self.info_url + " }"
+        return unicode(self).encode('utf-8')
 
     def __eq__(self, other):
         return other.image_url == self.image_url and other.info_url == self.info_url
 
 
 
-class ChannelUrlCache(object):
+class ChannelDataCache(object):
+
     def getChannelsFromWeb(self):
         url = urllib2.urlopen(self.channel_update_url)
         try:
@@ -60,15 +66,28 @@ class ChannelAdvancedSearch(object):
     __channel_objects__ = "__channel_objects__"
     __channel_count__ = "__channel_count__"
 
-    def cleanString(self, string):
+    def __replace_word_b_c_e(self, string, word):
+        if string[:len(word)+1] == word + ' ':
+            string = string[len(word)+1:]
+        return self.__replace_word_c_e(string, word)
+
+    def __replace_word_c_e(self, string, word):
+        if string[-len(word)-1:] == ' ' + word:
+            string = string[:-len(word)-1]
+        return string.replace(' ' + word + ' ', ' ')
+
+    def cleanString(self, string, country_string = None):
         string = string.strip().lower()
         string = string.replace('(', '').replace(')', '')
-        string = string.replace('_', ' ').replace('.', ' ')
-        string = string.replace(u'плюс','+').replace(u'минус','-')
-        string = string.replace(u' трк', '').replace(u'трк ', '').replace(u' тк', '').replace(u'тк ', '')
-        string = string.replace(u' hd', '').replace(u'hd ', '').replace(u' tv', '').replace(u'tv ', '')
-        string = string.replace('+', ' + ').replace('-', ' - ').replace(u'x', u' x ').replace('*', ' ').replace(u'х', u' x ')
-        return string
+        string = string.replace('_', ' ').replace('-', ' ').replace(u'плюс','+')
+        string = string.replace('+', ' + ').replace(u'x', u' x ').replace('*', ' ').replace(u'х', u' x ').strip()
+        string = self.__replace_word_b_c_e(self.__replace_word_b_c_e(string, u'канал'), u'channel')
+        string = self.__replace_word_b_c_e(self.__replace_word_b_c_e(self.__replace_word_b_c_e(string, u'трк'), u'тк'), u'тв')
+        string = self.__replace_word_b_c_e(self.__replace_word_b_c_e(string, u'hd'), u'tv')
+        string = string.replace('.', ' ').replace('!', ' ').replace(u'tv', u' tv ').replace(u'тв', u' тв ').strip()
+        if country_string is not None:
+            string = self.__replace_word_c_e(string, country_string)
+        return string.replace('  ', ' ').replace('  ', ' ')
 
     def addNewChannel(self, channel, channel_list):
         parts = self.cleanString(channel.name).split(' ')
@@ -85,12 +104,13 @@ class ChannelAdvancedSearch(object):
         print channel, repeats
 
         for key in repeats:
-            str = key
+            repeat_key = key
             for i in range(1,repeats[key]):
-                str = str + u'_' + key
-            self.__add_channel(str,channel, channel_list)
-            if key != str:
+                repeat_key = repeat_key + u'_' + key
+            self.__add_channel(repeat_key,channel, channel_list)
+            if key != repeat_key:
                 self.__add_channel(key, channel, channel_list)
+        self.__add_channel('('+str(len(parts))+')', channel, channel_list)
 
     def __add_channel(self, key, channel, channel_list):
         try:
@@ -114,48 +134,57 @@ class ChannelAdvancedSearch(object):
     def __find(self, sets):
         sets_length = len(sets)
         if sets_length > 1:
-            new_sets = []
-            for i in range(0, sets_length):
-                for j in range(i+1, sets_length):
-                    the_set = sets[i].intersection(sets[j])
-                    if len(the_set) > 0:
-                        new_sets.append(the_set)
-            if len(new_sets) > 1:
-                cur_len = len(new_sets[0])
-                for the_set in new_sets:
-                    if len(the_set) != cur_len:
-                        return self.__find(new_sets)
-        else:
-            new_sets = sets
-        if len(new_sets) > 0:
-            for item in new_sets[0]:
-                return item
-        return None
+            new_sets = set()
+            i = 0
+            for left in sets:
+                if i < sets_length-1:
+                    j = 0
+                    for right in sets:
+                        if j > i:
+                            the_set = left.intersection(right)
+                            if len(the_set) > 0:
+                                new_sets.add(the_set)
+                        j += 1
+                else:
+                    break
+                i += 1
+            return self.__find(new_sets)
 
-    def getChannel(self, name, channel_list):
-        parts = self.cleanString(name).split(' ')
+        try:
+            for item in sets.pop():
+                return item
+        except KeyError:
+            return None
+
+    def getChannel(self, name, channel_list, country_string = None):
+        parts = self.cleanString(name, country_string).split(' ')
 
         repeats = {}
         for part in parts:
             if part != '':
                 repeats[part] = repeats.get(part, 0) + 1
 
-        sets = []
+        sets = set()
         for key in repeats:
-            str = key
+            repeat_key = key
             for i in range(1,repeats[key]):
-                str = str + u'_' + key
-            if key != str:
+                repeat_key = repeat_key + u'_' + key
+            if key != repeat_key:
                 try:
                     channels = channel_list[self.__search_dictionary__][key]
-                    sets.append(channels)
+                    sets.add(frozenset(channels))
                 except:
                     pass
             try:
-                channels = channel_list[self.__search_dictionary__][str]
-                sets.append(channels)
+                channels = channel_list[self.__search_dictionary__][repeat_key]
+                sets.add(frozenset(channels))
             except:
                 pass
+        try:
+            channels = channel_list[self.__search_dictionary__]['('+str(len(parts))+')']
+            sets.add(frozenset(channels))
+        except:
+            pass
         res = self.__find(sets)
         if res is not None:
             try:

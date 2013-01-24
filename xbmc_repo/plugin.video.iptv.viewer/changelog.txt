@@ -1,2 +1,5 @@
+[B]Version 0.0.2[/B]
+- Implemented channel lists icons
+
 [B]Version 0.0.1[/B]
 - Added addon functionality implementation from scratch
