@@ -24,4 +24,8 @@ do
 done
 
 python addons_xml_generator.py
+
+mv -f addons.xml "$REPO_DIR/"
+mv -f addons.xml.md5 "$REPO_DIR/"
+
 #python support/iptv.viewer/channel_data_builder.py
