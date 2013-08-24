@@ -7,6 +7,7 @@ import os
 #import base64
 from channel_cache import ChannelDataCache, ChannelAdvancedSearch
 
+
 class InfoProvider(ChannelDataCache, ChannelAdvancedSearch):
 
     def __init__(self, path, update_url, country_string = None):
@@ -29,7 +30,7 @@ class InfoProvider(ChannelDataCache, ChannelAdvancedSearch):
  #       return base64.urlsafe_b64encode(key.encode('utf-8')) + '.png'
 
 if __name__ == '__main__':
-    provider = InfoProvider(os.getcwd() + '/temp_cache', 'https://dl.dropbox.com/s/284qhw5g7dovpl7/channels.ch?dl=1')
+    provider = InfoProvider(os.getcwd() + '/temp_cache', 'https://dl.dropboxusercontent.com/s/284qhw5g7dovpl7/channels.ch?token_hash=AAGISGfEjSn5fj8g6_yDIxlgiZKmy7d09k6d5vBZNMo4ew&dl=1')
     try:
         print '1+1', provider.getImageURL("1+1")
     except KeyError:
@@ -44,6 +45,10 @@ if __name__ == '__main__':
         pass
     try:
         print 'HTH', provider.getImageURL(u"НТН")
+    except KeyError:
+        pass
+    try:
+        print "Перец", provider.getImageURL(u"Перец")
     except KeyError:
         pass
     print 'MAIN FINISHED'

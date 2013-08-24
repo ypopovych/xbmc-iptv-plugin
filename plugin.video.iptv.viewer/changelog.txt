@@ -1,3 +1,6 @@
+[B]Version 0.0.3[/B]
+- Updated channel lists icons match algorythm
+
 [B]Version 0.0.2[/B]
 - Implemented channel lists icons
 

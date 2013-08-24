@@ -8,53 +8,44 @@ import os
 import sys
 from urlparse import urlparse
 import json
+import cookielib
 
 sys.path.append(os.getcwd() + '/../../plugin.video.iptv.viewer')
-from channel_cache import ChannelUrlCache, Channel, ChannelAdvancedSearch
+from channel_cache import ChannelDataCache, Channel, ChannelAdvancedSearch
 
-class DataParser(ChannelUrlCache, ChannelAdvancedSearch):
+
+class DataParser(ChannelDataCache, ChannelAdvancedSearch):
 
     def getChannelsFromWeb(self):
-        return None
+        return self.channels
 
     def __init__(self, path, data):
         self.run_data = data
-        ChannelUrlCache.__init__(self, path, 'http://none', 5, data['output_name'])
-
-    def get_channel_name(self, name, channels, append_string):
-        saved_channel = self.getChannel(name, channels)
-        if saved_channel is not None:
-            if self.cleanString(saved_channel.name).split(' ') == self.cleanString(name).split(' '):
-                if append_string is not None:
-                    name = name + append_string
-                    saved_channel = self.getChannel(name, channels)
-                    if saved_channel is None or self.cleanString(saved_channel.name).split(' ') != self.cleanString(name).split(' '):
-                        return name
-                    else:
-                        return None
-                else:
-                    return None
-            else:
-                return name
-        else:
-            return name
+        ChannelDataCache.__init__(self, path, 'http://none', 10000000, data['output_name'])
 
     def parse_url(self, main_url, channels, append_string = None):
         parts = urlparse(main_url)
         server_url = parts[0]+'://'+parts[1]
 
-        url = urllib2.urlopen(main_url)
+        cookies = cookielib.FileCookieJar()
+        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookies))
+        url = opener.open(main_url)
         data = url.readlines()
         url.close()
-        regular = re.compile('.*<a class="b-link" href="(.+channel.+)">(.*)</a>')
-        icon_regular = re.compile('.*<div class="b-channel-information__logo"><img.*?src="(.+?)".*')
+
+        regular = re.compile(
+            '<a class="b-link.*?" href="([a-zA-Z0-9_\-/]+channels[a-zA-Z0-9_\-/]+)"><span.*?>'
+            '<img.*?src="(.+?)".*?/span>(.*?)</a>',
+            re.U
+        )
+        icon_regular = re.compile('<div class="b-tv-channel-content__channel-info"><span.*?><img.*?src="(.+?)"', re.U)
         for line in data:
             u = unicode(line, 'utf8', 'ignore')
             for match in regular.finditer(u):
-                print match.group(1)
-                name = self.get_channel_name(match.group(2), channels, append_string)
+                print match.group(3), " : ", match.group(1), " : ", match.group(2)
+                name = self.cleanString(match.group(3), append_string)
                 if name is not None:
-                    url2 = urllib2.urlopen(server_url + match.group(1))
+                    url2 = opener.open(server_url + match.group(1))
                     data2 = url2.readlines()
                     url2.close()
                     added = False
@@ -62,6 +53,7 @@ class DataParser(ChannelUrlCache, ChannelAdvancedSearch):
                         u2 = unicode(line2, 'utf8', 'ignore')
                         match2 = icon_regular.search(u2)
                         if match2 is not None:
+                            print match2.group(1)
                             self.addNewChannel(Channel(name, match2.group(1), server_url + match.group(1)), channels)
                             added = True
                             del u2
@@ -69,25 +61,26 @@ class DataParser(ChannelUrlCache, ChannelAdvancedSearch):
                         del u2
                     del data2
                     if not added:
-                        self.addNewChannel(Channel(name, None, server_url + match.group(1)), channels)
+                        self.addNewChannel(Channel(name, match.group(2), server_url + match.group(1)), channels)
             del u
         del data
 
     def build_database(self):
-        channels = {}
+        channels = set()
         urls = self.run_data['urls']
         for url in urls:
             self.parse_url(url['url'], channels, url['country_string'])
-            self.setChannels(channels)
+        self.setChannels(channels)
 
     def getChannelInfo(self, name):
-        return self.getChannel(name, self.channels)
+        return self.getChannel(name, self.channels, u"украина")
 
     def print_database(self):
-        print self.channels
+        for channel in self.channels:
+         print channel
 
 
-def  test(path, type):
+def test(path, type):
     file = open(os.getcwd() + '/parser_urls.json')
     data = json.load(file)
     file.close()
@@ -100,6 +93,7 @@ def  test(path, type):
     print dp.getChannelInfo(u'Discovery World')
     print dp.getChannelInfo(u'Мега')
     print dp.getChannelInfo(u'ТРК Мега')
+    print dp.getChannelInfo(u'Украина')
     print dp.getChannelInfo(u'ТК Мега')
     print dp.getChannelInfo(u'НТН')
 

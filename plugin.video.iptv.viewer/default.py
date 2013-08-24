@@ -13,6 +13,7 @@ def enum(*sequential, **named):
     enums = dict(zip(sequential, range(len(sequential))), **named)
     return type('Enum', (), enums)
 
+
 class M3UCache(FileCache):
     def getURL(self, key):
         return key
@@ -24,13 +25,11 @@ class M3UCache(FileCache):
             name = os.path.basename(urlparts[2])
         return name + '.m3u'
 
-class Plugin(object):
 
+class Plugin(object):
     MODE = enum('OPEN_PLAYLIST', 'PLAY_VIDEO')
 
-    __channels_folder_url__ = 'http://github.com/IICUX/xbmc-iptv-plugin/raw/master/support/iptv.viewer/db'
-    __channels_file_names__ = ( 'ruchannels.ch', 'uachannels.ch' )
-    __channel_country_strings__ = ( u'россия', u'украина')
+    __channel_country_strings__ = (u'россия', u'украина')
 
     def __init__(self, script, handle, settings, params = None):
         self.script = script
@@ -39,7 +38,7 @@ class Plugin(object):
         self.path = settings.getAddonInfo('path')
         self.m3u_cache = None
         self.info_provider = None
-        self.channel_updates = self.__channels_folder_url__ + '/' + self.__channels_file_names__[int(settings.getSetting('channel_list'))]
+        self.channel_updates = 'http://github.com/IICUX/xbmc-iptv-plugin/raw/master/support/iptv.viewer/db/channels.ch'
         self.channel_country = self.__channel_country_strings__[int(settings.getSetting('channel_list'))]
 
         playlists = settings.getSetting('playlists') + ',' + settings.getSetting('playlists2') + ',' +\
@@ -58,7 +57,9 @@ class Plugin(object):
 
     def __getInfoProvider(self):
         if self.info_provider is None:
-            self.info_provider = InfoProvider(os.path.join(os.path.join(self.path,'resources'), 'media'), self.channel_updates, self.channel_country)
+            self.info_provider = InfoProvider(os.path.join(os.path.join(self.path,'resources'), 'media'),
+                                              self.channel_updates,
+                                              self.channel_country)
         return self.info_provider
 
     def getPlaylistList(self, playlists):
@@ -121,7 +122,7 @@ class Plugin(object):
             xbmcplugin.addDirectoryItem(self.handle, purl, listitem, False)
             index+=1
         xbmcplugin.endOfDirectory(self.handle)
-	
+
     def playVideo(self):
         playlist = self.playlists[int(self.params['playlist'])]
         video = int(self.params['video'])
@@ -136,8 +137,7 @@ class Plugin(object):
         player = xbmc.Player(xbmc.PLAYER_CORE_AUTO)
         player.play(resultPlaylist)
         player.playselected(video)
-		
-	
+
     def execute(self):
         self.MODE_FUNC[int(self.params['mode'])](self)
 
